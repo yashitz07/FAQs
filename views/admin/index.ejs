@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ Admin Panel</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 20px; padding: 20px; }
+        .faq-container { border: 1px solid #ddd; padding: 10px; margin: 10px 0; }
+        .alert { display: none; padding: 10px; margin: 10px 0; }
+        .success { background: lightgreen; color: green; }
+        .error { background: lightcoral; color: red; }
+        .translations { display: none; padding: 10px; background: #f9f9f9; margin-top: 10px; }
+        .redis-status { color: white; padding: 5px; border-radius: 5px; margin-bottom: 10px; }
+        .redis-ok { background: green; }
+        .redis-error { background: red; }
+    </style>
+</head>
+<body>
+    <h2>FAQ Management</h2>
+
+    <div id="redis-status" class="redis-status">Checking Redis...</div>
+
+    <div id="alert" class="alert"></div>
+
+    <form id="add-faq-form">
+        <label>Question:</label><br>
+        <input type="text" id="question" required><br><br>
+
+        <label>Answer:</label><br>
+        <textarea id="answer" required></textarea><br><br>
+
+        <label>Hindi Translation:</label><br>
+        <input type="text" id="hi" placeholder="Optional"><br><br>
+
+        <label>Gujarati Translation:</label><br>
+        <input type="text" id="gj" placeholder="Optional"><br><br>
+
+        <label>Bengali Translation:</label><br>
+        <input type="text" id="bn" placeholder="Optional"><br><br>
+
+        <label>Marathi Translation:</label><br>
+        <input type="text" id="mr" placeholder="Optional"><br><br>
+
+        <button type="submit">Add FAQ</button>
+    </form>
+
+    <h3>FAQs</h3>
+    <div id="faq-list">
+        <% faqs.forEach((faq) => { %>
+            <div class="faq-container">
+                <b>Q:</b> <%= faq.question %><br>
+                <b>A:</b> <%= faq.answer %><br>
+                <button onclick="showTranslations('<%= faq.id %>')">View Translations</button>
+                <div id="translations-<%= faq.id %>" class="translations"></div>
+            </div>
+        <% }) %>
+    </div>
+
+    <script>
+        function checkRedis() {
+            $.get("/api/faqs/redis-status", function (data) {
+                $("#redis-status").text("Redis: " + data.status)
+                    .removeClass("redis-ok redis-error")
+                    .addClass(data.status === "OK" ? "redis-ok" : "redis-error");
+            }).fail(() => $("#redis-status").text("Redis: Not Connected").addClass("redis-error"));
+        }
+
+        function showTranslations(faqId) {
+            $.get(`/api/faqs/translations/${faqId}`, function (data) {
+                let content = `
+                    <b>English:</b> ${data.en}<br>
+                    <b>Hindi:</b> ${data.hi}<br>
+                    <b>Gujarati:</b> ${data.gu}<br>
+                    <b>Bengali:</b> ${data.bn}<br>
+                    <b>Marathi:</b> ${data.mr}
+                `;
+                $(`#translations-${faqId}`).html(content).slideToggle();
+            });
+        }
+
+        $("#add-faq-form").submit(function (e) {
+            e.preventDefault();
+            let question = $("#question").val();
+            let answer = $("#answer").val();
+            let translations = {
+                hi: $("#hi").val(),
+                gj: $("#gj").val(),
+                bn: $("#bn").val(),
+                mr: $("#mr").val()
+            };
+
+            $.post("/api/faqs", { question, answer, translations })
+                .done(() => {
+                    $("#alert").text("FAQ Added Successfully!")
+                        .removeClass("error").addClass("success").slideDown().delay(2000).slideUp();
+                    location.reload();
+                })
+                .fail(() => {
+                    $("#alert").text("Failed to Add FAQ")
+                        .removeClass("success").addClass("error").slideDown().delay(2000).slideUp();
+                });
+        });
+
+        $(document).ready(() => checkRedis());
+    </script>
+</body>
+</html>
