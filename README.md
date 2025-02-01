@@ -1,6 +1,8 @@
 # **FAQ Management System with Multilingual Support and Caching**
 
 This project is a **FAQ management system** built with **Node.js**, **MongoDB**, **Redis**, and integrates **Google Translate API** for multilingual translation. It provides an **admin panel** for managing FAQs and utilizes **Redis** for caching data, improving performance.
+Demo video with basic frotend
+[Watch the video](assets/video/FAQ%20Admin%20Panel%20-%20Google%20Chrome%202025-02-01%2016-42-53.mp4)
 
 ---
 
